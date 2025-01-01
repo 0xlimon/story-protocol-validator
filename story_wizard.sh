@@ -29,8 +29,9 @@ sudo apt update
 sudo apt-get update
 sudo apt install curl git make jq build-essential gcc unzip wget lz4 aria2 -y
 
-echo -e "${BLUE}=== Downloading Story-Geth binary ===${NC}"
-wget https://github.com/piplabs/story-geth/releases/download/v0.9.4/geth-linux-amd64
+echo -e "${BLUE}=== Downloading Story-Geth binary v0.11.0 ===${NC}"
+cd $HOME
+wget https://github.com/piplabs/story-geth/releases/download/v0.11.0/geth-linux-amd64
 [ ! -d "$HOME/go/bin" ] && mkdir -p $HOME/go/bin
 if ! grep -q "$HOME/go/bin" $HOME/.bash_profile; then
   echo "export PATH=$PATH:/usr/local/go/bin:~/go/bin" >> ~/.bash_profile
@@ -40,22 +41,24 @@ mv $HOME/geth-linux-amd64 $HOME/go/bin/story-geth
 source $HOME/.bash_profile
 story-geth version
 
-echo -e "${BLUE}=== Downloading Story binary ===${NC}"
-wget https://story-geth-binaries.s3.us-west-1.amazonaws.com/story-public/story-linux-amd64-0.11.0-aac4bfe.tar.gz
-tar -xzvf story-linux-amd64-0.9.11-2a25df1.tar.gz
+echo -e "${BLUE}=== Downloading Story binary v0.13.0 ===${NC}"
+cd $HOME
+rm -rf story-linux-amd64
+wget https://github.com/piplabs/story/releases/download/v0.13.0/story-linux-amd64
 [ ! -d "$HOME/go/bin" ] && mkdir -p $HOME/go/bin
 if ! grep -q "$HOME/go/bin" $HOME/.bash_profile; then
-  echo 'export PATH=$PATH:$HOME/go/bin' >> $HOME/.bash_profile
+  echo "export PATH=$PATH:/usr/local/go/bin:~/go/bin" >> ~/.bash_profile
 fi
-sudo cp story-linux-amd64-0.9.11-2a25df1/story $HOME/go/bin/story
+chmod +x story-linux-amd64
+sudo cp $HOME/story-linux-amd64 $HOME/go/bin/story
 source $HOME/.bash_profile
 story version
 
 echo -e "${YELLOW}Please enter your moniker name:${NC}"
 read moniker_name
 
-echo -e "${BLUE}=== Initializing Iliad node ===${NC}"
-story init --network iliad --moniker "$moniker_name"
+echo -e "${BLUE}=== Initializing Odyssey node ===${NC}"
+story init --network odyssey --moniker "$moniker_name"
 
 echo -e "${BLUE}=== Creating story-geth service file ===${NC}"
 sudo tee /etc/systemd/system/story-geth.service > /dev/null <<EOF
@@ -65,7 +68,7 @@ After=network.target
 
 [Service]
 User=root
-ExecStart=/root/go/bin/story-geth --iliad --syncmode full
+ExecStart=/root/go/bin/story-geth --odyssey --syncmode full
 Restart=on-failure
 RestartSec=3
 LimitNOFILE=4096
@@ -94,12 +97,14 @@ EOF
 echo -e "${BLUE}=== Reloading and starting story-geth ===${NC}"
 sudo systemctl daemon-reload && \
 sudo systemctl start story-geth && \
-sudo systemctl enable story-geth
+sudo systemctl enable story-geth && \
+sudo systemctl status story-geth
 
 echo -e "${BLUE}=== Reloading and starting story ===${NC}"
 sudo systemctl daemon-reload && \
 sudo systemctl start story && \
-sudo systemctl enable story
+sudo systemctl enable story && \
+sudo systemctl status story
 
 echo -e "${GREEN}=== Installation and setup completed successfully ===${NC}"
 
